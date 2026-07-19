@@ -1,0 +1,174 @@
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --text: #1c2420;
+  --text-muted: #5b6b62;
+  --accent: #233a33;
+  --accent-contrast: #f6f4ef;
+  --border: #ddd8cc;
+  --success: #2f6b46;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121815;
+    --surface: #1b2420;
+    --text: #eceee9;
+    --text-muted: #9caea3;
+    --accent: #7fb69a;
+    --accent-contrast: #121815;
+    --border: #2c3831;
+    --success: #7fb69a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 4px;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.passage-track {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.passage-text {
+  white-space: pre-wrap;
+  font-size: 1.02rem;
+}
+
+.attribution {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.day-row:last-child {
+  border-bottom: none;
+}
+
+.day-row.complete {
+  color: var(--success);
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+  margin: 8px 0 4px;
+}
+
+.progress-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--success);
+}
