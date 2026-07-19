@@ -5,13 +5,12 @@ import { fileURLToPath } from "node:url";
 // full node_modules tree — same shape as the sibling Covenanters deployment.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Turbopack/webpack's dev-mode HMR runtime relies on eval() to wrap modules,
-// so a strict script-src blocks React from ever hydrating in `next dev` (the
-// page loads, but no client component becomes interactive, silently). This
-// only relaxes the policy for local development — production builds don't
-// need eval and keep the strict policy.
-const isDev = process.env.NODE_ENV !== "production";
-
+// Next's App Router bootstraps hydration with small inline <script> tags and
+// (in dev) Turbopack's HMR runtime uses eval() to wrap modules, so a strict
+// script-src blocks React from ever mounting — the page loads but stays
+// blank/inert. The Covenanters app hits the same constraint and carries the
+// same relaxation unconditionally; matching that here rather than trying to
+// be stricter, since a nonce-based CSP would need its own middleware wiring.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -22,7 +21,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data:",
   "font-src 'self' data:",
   "connect-src 'self'",
-  isDev ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'" : "script-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "worker-src 'self'",
   "upgrade-insecure-requests",
