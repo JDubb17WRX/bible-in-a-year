@@ -72,3 +72,54 @@ export function setDayComplete(userId: string, dayNumber: number, complete: bool
     .prepare("DELETE FROM bible_reading_progress WHERE user_id = ? AND day_number = ?")
     .run(userId, dayNumber);
 }
+
+export type Streaks = {
+  current: number;
+  longest: number;
+};
+
+// Streaks are measured in plan day-numbers, which track calendar days
+// 1:1 once a user's start date has passed. "current" doesn't reset just
+// because today isn't marked yet — it counts back from today if today is
+// done, otherwise from yesterday, so an in-progress day doesn't zero it out.
+export function computeStreaks(completedDays: Set<number>, today: number): Streaks {
+  let current = 0;
+  let day = completedDays.has(today) ? today : today - 1;
+  while (day >= 1 && completedDays.has(day)) {
+    current += 1;
+    day -= 1;
+  }
+
+  let longest = 0;
+  let run = 0;
+  for (let d = 1; d <= today; d += 1) {
+    if (completedDays.has(d)) {
+      run += 1;
+      longest = Math.max(longest, run);
+    } else {
+      run = 0;
+    }
+  }
+  longest = Math.max(longest, current);
+
+  return { current, longest };
+}
+
+export type Badge = {
+  name: string;
+  sub: string;
+  earned: boolean;
+};
+
+export function computeBadges(daysRead: number, streaks: Streaks): Badge[] {
+  return [
+    { name: "First Reading", sub: "Day 1 complete", earned: daysRead >= 1 },
+    { name: "7-Day Streak", sub: "One week running", earned: streaks.longest >= 7 },
+    { name: "30-Day Streak", sub: "A month of faithfulness", earned: streaks.longest >= 30 },
+    { name: "100 Days Read", sub: "A third of the way", earned: daysRead >= 100 },
+    { name: "Quarter Way", sub: "91 of 364 days", earned: daysRead >= 91 },
+    { name: "Halfway There", sub: "182 of 364 days", earned: daysRead >= 182 },
+    { name: "200 Days Read", sub: "Over half the year", earned: daysRead >= 200 },
+    { name: "Whole Bible", sub: "All 364 days complete", earned: daysRead >= 364 },
+  ];
+}

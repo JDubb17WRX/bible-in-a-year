@@ -2,11 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/lib/session";
 import { getSettings, getCompletedDays } from "@/lib/reading-progress";
-import { dateForDayNumber } from "@/lib/day-math";
-import { READING_PLAN } from "@/data/reading-plan";
-import { DayCheckbox } from "@/components/DayCheckbox";
+import { getCurrentDayNumber } from "@/lib/day-math";
+import { READING_PLAN, type ReadingEntry } from "@/data/reading-plan";
+import { TrackIcon } from "@/components/TrackIcon";
+import { TabBar } from "@/components/TabBar";
 
 export const metadata = { title: "Bible in a Year | Calendar" };
+
+type Segment =
+  | { type: "summary"; startWeek: number; endWeek: number; doneCount: number; totalCount: number }
+  | { type: "week"; week: number; entries: ReadingEntry[] };
 
 export default async function CalendarPage() {
   const user = await requireSessionUser("/calendar");
@@ -17,40 +22,84 @@ export default async function CalendarPage() {
   }
 
   const completedDays = getCompletedDays(user.userId);
-  const weeks = new Map<number, typeof READING_PLAN>();
+  const currentDayNumber = getCurrentDayNumber(settings.startDate);
 
+  const weekMap = new Map<number, ReadingEntry[]>();
   for (const entry of READING_PLAN) {
-    const list = weeks.get(entry.week) || [];
+    const list = weekMap.get(entry.week) || [];
     list.push(entry);
-    weeks.set(entry.week, list);
+    weekMap.set(entry.week, list);
+  }
+  const weeks = [...weekMap.entries()]
+    .map(([week, entries]) => ({ week, entries }))
+    .sort((a, b) => a.week - b.week);
+
+  const segments: Segment[] = [];
+  let pending: { startWeek: number; endWeek: number; doneCount: number; totalCount: number } | null = null;
+
+  for (const { week, entries } of weeks) {
+    const doneCount = entries.filter((e) => completedDays.has(e.dayNumber)).length;
+    const isComplete = doneCount === entries.length;
+
+    if (isComplete) {
+      if (pending) {
+        pending.endWeek = week;
+        pending.doneCount += doneCount;
+        pending.totalCount += entries.length;
+      } else {
+        pending = { startWeek: week, endWeek: week, doneCount, totalCount: entries.length };
+      }
+    } else {
+      if (pending) {
+        segments.push({ type: "summary", ...pending });
+        pending = null;
+      }
+      segments.push({ type: "week", week, entries });
+    }
+  }
+  if (pending) {
+    segments.push({ type: "summary", ...pending });
   }
 
   return (
     <main>
-      <div className="card">
-        <Link href="/">&larr; Back to today</Link>
-        <h1>Full Calendar</h1>
-        <p>{completedDays.size} of {READING_PLAN.length} days read.</p>
-      </div>
+      <h1>Calendar</h1>
+      <p className="muted" style={{ fontSize: "0.8rem", marginBottom: 16 }}>
+        {completedDays.size} of {READING_PLAN.length} days read
+      </p>
 
-      {[...weeks.entries()].map(([week, entries]) => (
-        <div className="card" key={week}>
-          <h2>Week {week}</h2>
-          {entries.map((entry) => {
-            const iso = dateForDayNumber(settings.startDate, entry.dayNumber);
-            const complete = completedDays.has(entry.dayNumber);
-            return (
-              <div className={`day-row${complete ? " complete" : ""}`} key={entry.dayNumber}>
-                <DayCheckbox day={entry.dayNumber} initialComplete={complete} label="" />
-                <Link href={`/?day=${entry.dayNumber}`} style={{ flex: 1 }}>
-                  <strong>{entry.track}</strong> &mdash; {entry.reference}
+      {segments.map((segment) =>
+        segment.type === "summary" ? (
+          <div className="week-summary-row" key={`summary-${segment.startWeek}`}>
+            <span>{segment.startWeek === segment.endWeek ? `Week ${segment.startWeek}` : `Weeks ${segment.startWeek}–${segment.endWeek}`}</span>
+            <span>
+              {segment.doneCount} / {segment.totalCount} read
+            </span>
+          </div>
+        ) : (
+          <div className="week-card" key={`week-${segment.week}`}>
+            <div className="week-card-header">
+              <strong>Week {segment.week}</strong>
+              <span>{segment.entries.filter((e) => completedDays.has(e.dayNumber)).length} / 7</span>
+            </div>
+            <div className="week-days">
+              {segment.entries.map((entry) => (
+                <Link className="day-chip" href={`/?day=${entry.dayNumber}`} key={entry.dayNumber}>
+                  <TrackIcon
+                    track={entry.track}
+                    size={16}
+                    incomplete={!completedDays.has(entry.dayNumber)}
+                    isToday={entry.dayNumber === currentDayNumber}
+                  />
+                  <span>{entry.dayNumber}</span>
                 </Link>
-                <span className="passage-track">{iso}</span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+              ))}
+            </div>
+          </div>
+        ),
+      )}
+
+      <TabBar />
     </main>
   );
 }

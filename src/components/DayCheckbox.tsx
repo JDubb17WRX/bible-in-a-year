@@ -5,10 +5,9 @@ import { useState, useTransition } from "react";
 type DayCheckboxProps = {
   day: number;
   initialComplete: boolean;
-  label?: string;
 };
 
-export function DayCheckbox({ day, initialComplete, label = "Mark read" }: DayCheckboxProps) {
+export function DayCheckbox({ day, initialComplete }: DayCheckboxProps) {
   const [complete, setComplete] = useState(initialComplete);
   const [isPending, startTransition] = useTransition();
 
@@ -34,9 +33,13 @@ export function DayCheckbox({ day, initialComplete, label = "Mark read" }: DayCh
   }
 
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-      <input type="checkbox" checked={complete} disabled={isPending} onChange={toggle} />
-      <span>{label}</span>
-    </label>
+    <button
+      type="button"
+      className={`mark-read-btn${complete ? " complete" : ""}`}
+      onClick={toggle}
+      disabled={isPending}
+    >
+      {complete ? "✓ Read today" : "Mark as read"}
+    </button>
   );
 }

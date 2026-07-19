@@ -1,16 +1,26 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSessionUser } from "@/lib/session";
-import { getSettings, getCompletedDays, isDayComplete } from "@/lib/reading-progress";
+import { getSettings, getCompletedDays, isDayComplete, computeStreaks } from "@/lib/reading-progress";
 import { getPassageForDay } from "@/lib/get-passage";
 import { getCurrentDayNumber, dateForDayNumber, formatDisplayDate } from "@/lib/day-math";
-import { TOTAL_DAYS } from "@/data/reading-plan";
+import { TOTAL_DAYS, getReadingForDay } from "@/data/reading-plan";
 import { DayCheckbox } from "@/components/DayCheckbox";
+import { TrackIcon } from "@/components/TrackIcon";
+import { TabBar } from "@/components/TabBar";
+import { DailyReminderChecker } from "@/components/DailyReminderChecker";
 
 export const metadata = { title: "Bible in a Year" };
 
 function clampDay(day: number): number {
   return Math.min(Math.max(day, 1), TOTAL_DAYS);
+}
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 export default async function HomePage({
@@ -32,6 +42,8 @@ export default async function HomePage({
 
   const completedDays = getCompletedDays(user.userId);
   const displayDate = formatDisplayDate(dateForDayNumber(settings.startDate, requestedDay));
+  const entry = getReadingForDay(requestedDay);
+  const streaks = computeStreaks(completedDays, currentDayNumber);
 
   let passageError: string | null = null;
   let passage: Awaited<ReturnType<typeof getPassageForDay>> = null;
@@ -47,32 +59,55 @@ export default async function HomePage({
 
   return (
     <main>
-      <div className="card">
-        <p className="eyebrow">
-          {isViewingToday ? "Today" : "Catching up"} &middot; Day {requestedDay} of {TOTAL_DAYS}
-        </p>
-        <h1>{displayDate}</h1>
-
-        <div className="progress-bar">
-          <span style={{ width: `${progressPercent}%` }} />
+      <div className="today-header">
+        <div>
+          {isViewingToday ? (
+            <p className="header-label">{greeting()}</p>
+          ) : (
+            <p className="header-label">
+              Catching up &middot; Day {requestedDay} of {TOTAL_DAYS}
+            </p>
+          )}
+          <h1>{displayDate}</h1>
         </div>
-        <p className="passage-track">
-          {completedDays.size} of {TOTAL_DAYS} days read ({progressPercent}%)
-        </p>
-
-        <nav style={{ display: "flex", gap: 16, margin: "12px 0" }}>
-          <Link href={`/?day=${clampDay(requestedDay - 1)}`}>&larr; Previous day</Link>
-          {!isViewingToday ? <Link href="/">Back to today</Link> : null}
-          <Link href={`/?day=${clampDay(requestedDay + 1)}`}>Next day &rarr;</Link>
-        </nav>
+        <div className="streak-pill">
+          <span className="streak-flame" />
+          <span>{streaks.current}</span>
+        </div>
       </div>
+
+      <div className="card progress-card">
+        <div
+          className="progress-ring"
+          style={{ background: `conic-gradient(var(--accent) ${progressPercent}%, var(--ring-track) 0)` }}
+        >
+          <div className="progress-ring-inner">
+            <strong>{currentDayNumber}</strong>
+            <span>of {TOTAL_DAYS}</span>
+          </div>
+        </div>
+        <div>
+          <p className="progress-label">Overall progress</p>
+          <p className="progress-pct">{progressPercent}% complete</p>
+          <p className="progress-streak-line">
+            {streaks.current}-day streak &middot; longest {streaks.longest}
+          </p>
+        </div>
+      </div>
+
+      {entry ? (
+        <div className="current-track-row">
+          <TrackIcon track={entry.track} size={22} />
+          <strong>{entry.track}</strong>
+          <span className="muted">&middot; Day {requestedDay}</span>
+        </div>
+      ) : null}
 
       <div className="card">
         {passageError ? (
-          <p style={{ color: "#b3372f" }}>{passageError}</p>
+          <p className="error-text">{passageError}</p>
         ) : passage ? (
           <>
-            <p className="passage-track">{passage.track}</p>
             <h2>{passage.reference}</h2>
             <p className="passage-text">{passage.content}</p>
             <p className="attribution">{passage.attribution}</p>
@@ -80,16 +115,29 @@ export default async function HomePage({
         ) : (
           <p>No reading found for this day.</p>
         )}
-
-        <div style={{ marginTop: 16 }}>
-          <DayCheckbox day={requestedDay} initialComplete={complete} />
-        </div>
       </div>
 
-      <nav style={{ display: "flex", gap: 16 }}>
-        <Link href="/calendar">Full calendar</Link>
-        <Link href="/settings">Settings</Link>
+      <DayCheckbox day={requestedDay} initialComplete={complete} />
+
+      {!isViewingToday ? (
+        <div style={{ textAlign: "center", marginTop: 10 }}>
+          <Link href="/" className="muted" style={{ fontSize: "0.8rem", fontWeight: 600 }}>
+            Back to today
+          </Link>
+        </div>
+      ) : null}
+
+      <nav className="day-nav">
+        <Link href={`/?day=${clampDay(requestedDay - 1)}`}>
+          &larr; {isViewingToday ? "Yesterday" : "Previous day"}
+        </Link>
+        <Link href={`/?day=${clampDay(requestedDay + 1)}`}>
+          {isViewingToday ? "Tomorrow" : "Next day"} &rarr;
+        </Link>
       </nav>
+
+      <TabBar />
+      {isViewingToday ? <DailyReminderChecker complete={complete} /> : null}
     </main>
   );
 }
