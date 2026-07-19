@@ -37,3 +37,13 @@ export function formatDisplayDate(iso: string): string {
     timeZone: "UTC",
   });
 }
+
+export function formatShortDate(iso: string): string {
+  const ms = parseIsoDateUTC(iso);
+  return new Date(ms).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}

@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "any",
-    background_color: "#f6f4ef",
-    theme_color: "#233a33",
+    background_color: "#f7f3ea",
+    theme_color: "#4b6358",
     categories: ["lifestyle", "education", "books"],
     icons: [
       { src: "/app-icons/bible-icon-192.png", sizes: "192x192", type: "image/png" },

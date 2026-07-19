@@ -13,7 +13,7 @@ export type SessionUser = {
 // whatever value the browser already attached (via the shared
 // SESSION_COOKIE_DOMAIN) to the Covenanters app's own whoami endpoint, which
 // does the real verification.
-const SESSION_COOKIE_NAME = "covenanters_session";
+export const SESSION_COOKIE_NAME = "covenanters_session";
 
 function getCovenantersAppUrl(): string {
   const url = process.env.COVENANTERS_APP_URL;

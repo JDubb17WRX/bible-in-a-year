@@ -2,7 +2,9 @@ import Link from "next/link";
 import { requireSessionUser } from "@/lib/session";
 import { getSettings } from "@/lib/reading-progress";
 import { redirect } from "next/navigation";
-import { OnboardingForm } from "@/components/OnboardingForm";
+import { SettingsPlanSection } from "@/components/SettingsPlanSection";
+import { NotificationsSection } from "@/components/NotificationsSection";
+import { SignOutButton } from "@/components/SignOutButton";
 
 export const metadata = { title: "Bible in a Year | Settings" };
 
@@ -16,19 +18,29 @@ export default async function SettingsPage() {
 
   return (
     <main>
-      <div className="card">
-        <Link href="/">&larr; Back to today</Link>
+      <div className="settings-back">
+        <Link href="/profile">&larr;</Link>
         <h1>Settings</h1>
-        <p>
-          Changing the start date shifts which day you land on today. Changing translation only
-          affects passages you view from now on (nothing already read is lost).
-        </p>
-        <OnboardingForm
-          initialStartDate={settings.startDate}
-          initialTranslation={settings.translation}
-          submitLabel="Save changes"
-        />
       </div>
+
+      <p className="settings-section-label">Reading plan</p>
+      <SettingsPlanSection startDate={settings.startDate} translation={settings.translation} />
+
+      <NotificationsSection />
+
+      <p className="settings-section-label">About</p>
+      <div className="settings-group">
+        <Link href="/settings/help" className="settings-row settings-row-link">
+          <span className="settings-row-label">Help &amp; support</span>
+          <span className="settings-row-value">&rsaquo;</span>
+        </Link>
+        <Link href="/settings/about" className="settings-row settings-row-link">
+          <span className="settings-row-label">About this app</span>
+          <span className="settings-row-value">&rsaquo;</span>
+        </Link>
+      </div>
+
+      <SignOutButton />
     </main>
   );
 }
