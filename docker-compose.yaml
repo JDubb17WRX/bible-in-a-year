@@ -1,0 +1,33 @@
+services:
+  bible:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      TZ: America/New_York
+      APP_BASE_URL: ${APP_BASE_URL}
+      COVENANTERS_APP_URL: ${COVENANTERS_APP_URL}
+      COVENANTERS_LOGIN_URL: ${COVENANTERS_LOGIN_URL}
+      ESV_API_KEY: ${ESV_API_KEY}
+      WEB_TRANSLATION_API_BASE: ${WEB_TRANSLATION_API_BASE:-https://bible-api.com}
+      SQLITE_DB_PATH: /app/data/bible.sqlite
+    volumes:
+      - ./data:/app/data
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=bible_default
+      - traefik.http.services.bible.loadbalancer.server.port=3000
+      - traefik.http.routers.bible-root.rule=Host(`bible.rpcnacovenanters.com`)
+      - traefik.http.routers.bible-root.entrypoints=websecure
+      - traefik.http.routers.bible-root.tls=true
+      - traefik.http.routers.bible-root.tls.certresolver=letsencrypt
+    networks:
+      - default
+
+networks:
+  default:
+    name: bible_default
